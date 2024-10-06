@@ -16,6 +16,7 @@ const (
 	Flag           = "--daemon"
 	defaultSock    = "/tmp/boringd.sock"
 	defaultLogFile = "/tmp/boringd.log"
+	defaultPIDFile = "/tmp/boringd.pid"
 	initWait       = 2 * time.Millisecond
 	startTimeout   = 2 * time.Second
 )
@@ -27,6 +28,7 @@ const (
 	Open
 	Close
 	List
+	Kill
 )
 
 var cmdKindNames = map[CmdKind]string{
@@ -34,9 +36,10 @@ var cmdKindNames = map[CmdKind]string{
 	Open:  "Open",
 	Close: "Close",
 	List:  "List",
+	Kill:  "Kill",
 }
 
-var sock, logFile, executableFile string
+var sock, logFile, pidFile, executableFile string
 
 func init() {
 	if sock = os.Getenv("BORING_SOCK"); sock == "" {
@@ -44,6 +47,9 @@ func init() {
 	}
 	if logFile = os.Getenv("BORING_LOG_FILE"); logFile == "" {
 		logFile = defaultLogFile
+	}
+	if pidFile = os.Getenv("BORING_PID_FILE"); pidFile == "" {
+		pidFile = defaultPIDFile
 	}
 }
 
@@ -111,5 +117,14 @@ func startDaemon() error {
 	}
 
 	log.Debugf("Daemon started with PID %d", cmd.Process.Pid)
+	fo, err := os.Create(pidFile)
+	if err != nil {
+		return err
+	}
+
+	n, err := fo.WriteString(fmt.Sprintf("%d", cmd.Process.Pid))
+	if (err != nil) || (n < 1) {
+		return err
+	}
 	return nil
 }

@@ -103,6 +103,15 @@ func handleConnection(conn net.Conn) {
 		closeTunnel(conn, cmd.Tunnel)
 	case List:
 		listTunnels(conn)
+	case Kill:
+		var err error
+		log.Infof("Shutting down.")
+		err = syscall.Kill(syscall.Getpid(), syscall.SIGINT)
+		if err != nil {
+			log.Errorf("Daemon killing failed?")
+		}
+		respond(conn, &err)
+
 	default:
 		unknownCmd(conn, cmd.Kind)
 	}

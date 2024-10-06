@@ -38,6 +38,8 @@ func main() {
 		controlTunnels(os.Args[2:], daemon.Close)
 	case "list", "l":
 		listTunnels()
+	case "kill", "k":
+		killDaemon()
 	default:
 		fmt.Println("Unknown command:", os.Args[1])
 		printUsage()
@@ -156,6 +158,18 @@ func closeTunnel(name string, conf *config.Config) {
 	}
 }
 
+func killDaemon() {
+	//no prepare, because we want to kill the
+	//daemon, not make sure it runs
+	var resp daemon.Resp
+	var err error
+	cmd := daemon.Cmd{Kind: daemon.Kill}
+	if err = transmitCmd(cmd, &resp); err != nil {
+		log.Errorf("Could not transmit command: %v", err)
+		return
+	}
+}
+
 func listTunnels() {
 	conf, err := prepare()
 	if err != nil {
@@ -225,4 +239,5 @@ func printUsage() {
 	fmt.Println("  boring list,l                        List tunnels")
 	fmt.Println("  boring open,o <name1> [<name2> ...]  Open specified tunnel(s)")
 	fmt.Println("  boring close,c <name1> [<name2> ...] Close specified tunnel(s)")
+	fmt.Println("  boring kill,k                        Shutdown running daemon")
 }
